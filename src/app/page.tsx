@@ -1,65 +1,228 @@
-import Image from "next/image";
+import Link from "next/link";
+import {
+  ArrowRight,
+  QrCode,
+  LayoutDashboard,
+  CreditCard,
+  Smartphone,
+  CheckCircle2,
+  Star,
+} from "lucide-react";
 
-export default function Home() {
+const features = [
+  {
+    icon: QrCode,
+    title: "QR Code Menus",
+    description:
+      "Generate scannable QR codes that link directly to your digital menu. Update in real-time.",
+  },
+  {
+    icon: LayoutDashboard,
+    title: "Live Order Dashboard",
+    description:
+      "Track orders as they flow from new to preparing to ready with a visual Kanban board.",
+  },
+  {
+    icon: CreditCard,
+    title: "POS Integrations",
+    description:
+      "Connect Square, Toast, Clover, and more. Sync orders and payments seamlessly.",
+  },
+  {
+    icon: Smartphone,
+    title: "Mobile-First Menu",
+    description:
+      "Beautiful, responsive digital menus optimized for every device your customers use.",
+  },
+];
+
+const testimonials = [
+  { name: "Sarah M.", role: "Café Owner", text: "Carta cut our order errors by 40% in the first month." },
+  { name: "David L.", role: "Restaurant Manager", text: "The POS sync alone saved us 10 hours a week of manual entry." },
+  { name: "Priya K.", role: "Food Truck Owner", text: "Our customers love scanning the QR code. So simple!" },
+];
+
+export default function LandingPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="min-h-screen bg-white">
+      {/* Navigation */}
+      <nav className="border-b border-slate-100">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center">
+              <span className="text-white font-bold text-sm">C</span>
+            </div>
+            <span className="text-lg font-semibold tracking-tight text-slate-900">
+              Carta
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/menu"
+              className="text-sm text-slate-500 hover:text-slate-900 transition-colors"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              Demo Menu
+            </Link>
+            <Link
+              href="/dashboard"
+              className="text-sm font-medium text-white bg-emerald-600 px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
             >
-              Learning
-            </a>{" "}
-            center.
+              Open Dashboard
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <section className="max-w-6xl mx-auto px-6 py-24 text-center">
+        <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 text-sm font-medium px-4 py-1.5 rounded-full mb-6">
+          <Star size={14} fill="currentColor" />
+          #1 Digital Menu Platform for Restaurants
+        </div>
+        <h1 className="text-5xl sm:text-6xl font-bold text-slate-900 tracking-tight leading-tight max-w-3xl mx-auto">
+          Your menu, digitized.
+          <br />
+          <span className="text-emerald-600">Your orders, streamlined.</span>
+        </h1>
+        <p className="text-lg text-slate-500 mt-6 max-w-xl mx-auto leading-relaxed">
+          Carta helps restaurants create beautiful digital menus, manage live
+          orders, and connect with any POS system — all from one dashboard.
+        </p>
+        <div className="flex items-center justify-center gap-4 mt-8">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 text-sm font-medium text-white bg-emerald-600 px-6 py-3 rounded-lg hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200"
+          >
+            Get Started Free
+            <ArrowRight size={16} />
+          </Link>
+          <Link
+            href="/menu"
+            className="inline-flex items-center gap-2 text-sm font-medium text-slate-700 bg-slate-100 px-6 py-3 rounded-lg hover:bg-slate-200 transition-colors"
+          >
+            View Demo Menu
+          </Link>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="bg-slate-50 py-20">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-slate-900">
+              Everything you need to run a modern restaurant
+            </h2>
+            <p className="text-slate-500 mt-3 max-w-lg mx-auto">
+              From QR menus to POS integration, Carta gives you the tools to
+              delight customers and simplify operations.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {features.map((f) => {
+              const Icon = f.icon;
+              return (
+                <div
+                  key={f.title}
+                  className="bg-white rounded-lg border border-border p-6"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center mb-4">
+                    <Icon size={20} className="text-emerald-600" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-slate-900 mb-2">
+                    {f.title}
+                  </h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    {f.description}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="py-20">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-3xl font-bold text-slate-900 text-center mb-12">
+            Loved by restaurant owners
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {testimonials.map((t) => (
+              <div
+                key={t.name}
+                className="bg-white rounded-lg border border-border p-6"
+              >
+                <div className="flex gap-1 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      size={14}
+                      fill="#059669"
+                      className="text-emerald-600"
+                    />
+                  ))}
+                </div>
+                <p className="text-sm text-slate-600 leading-relaxed mb-4">
+                  &ldquo;{t.text}&rdquo;
+                </p>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                    <span className="text-xs font-bold text-emerald-700">
+                      {t.name[0]}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-800">
+                      {t.name}
+                    </p>
+                    <p className="text-xs text-slate-400">{t.role}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="bg-emerald-600 py-16">
+        <div className="max-w-6xl mx-auto px-6 text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Ready to modernize your restaurant?
+          </h2>
+          <p className="text-emerald-100 mb-8 max-w-md mx-auto">
+            Join thousands of restaurants already using Carta to manage their
+            digital menu and orders.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 text-sm font-medium text-emerald-700 bg-white px-6 py-3 rounded-lg hover:bg-emerald-50 transition-colors"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <CheckCircle2 size={16} />
+            Start Free Trial
+          </Link>
         </div>
-      </main>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-slate-100 py-8">
+        <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded bg-emerald-600 flex items-center justify-center">
+              <span className="text-white font-bold text-[10px]">C</span>
+            </div>
+            <span className="text-sm text-slate-400">
+              © 2026 Carta. All rights reserved.
+            </span>
+          </div>
+          <div className="flex gap-6 text-sm text-slate-400">
+            <span className="hover:text-slate-600 cursor-pointer">Privacy</span>
+            <span className="hover:text-slate-600 cursor-pointer">Terms</span>
+            <span className="hover:text-slate-600 cursor-pointer">Support</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
