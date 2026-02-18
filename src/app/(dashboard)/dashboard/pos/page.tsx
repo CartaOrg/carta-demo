@@ -4,6 +4,10 @@ import { usePosStore, finishSync } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, Loader2, Plug, RefreshCw } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 
 export default function PosPage() {
   const integrations = usePosStore((s) => s.integrations);
@@ -39,24 +43,25 @@ export default function PosPage() {
             payments in real time.
           </p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-border rounded-lg hover:bg-slate-50 transition-colors">
+        <Button variant="outline" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 bg-white border-border hover:bg-slate-50">
           <RefreshCw size={16} />
           Refresh All
-        </button>
+        </Button>
       </div>
 
       {/* Integration Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {integrations.map((pos) => (
-          <div
+          <Card
             key={pos.id}
             className={cn(
-              "bg-white rounded-lg border p-5 transition-all",
+              "gap-0 p-5 transition-all",
               pos.status === "connected"
                 ? "border-emerald-200 shadow-sm shadow-emerald-50"
                 : "border-border"
             )}
           >
+            <CardContent className="p-0">
             {/* Top: Logo + Toggle */}
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
@@ -67,43 +72,31 @@ export default function PosPage() {
                   </h3>
                   {/* Status badge */}
                   {pos.status === "connected" && (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full mt-1">
+                    <Badge className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full mt-1">
                       <CheckCircle2 size={12} />
                       Connected
-                    </span>
+                    </Badge>
                   )}
                   {pos.status === "syncing" && (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full mt-1">
+                    <Badge className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full mt-1">
                       <Loader2 size={12} className="animate-spin" />
                       Syncing...
-                    </span>
+                    </Badge>
                   )}
                   {pos.status === "disconnected" && (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full mt-1">
+                    <Badge className="inline-flex items-center gap-1 text-xs font-medium text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full mt-1">
                       <Plug size={12} />
                       Disconnected
-                    </span>
+                    </Badge>
                   )}
                 </div>
               </div>
 
               {/* Toggle Switch */}
-              <button
-                onClick={() => toggleIntegration(pos.id)}
-                className={cn(
-                  "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2",
-                  pos.enabled ? "bg-emerald-600" : "bg-slate-200"
-                )}
-                role="switch"
-                aria-checked={pos.enabled}
-              >
-                <span
-                  className={cn(
-                    "inline-block h-4 w-4 rounded-full bg-white shadow-sm transform transition-transform",
-                    pos.enabled ? "translate-x-6" : "translate-x-1"
-                  )}
-                />
-              </button>
+              <Switch
+                checked={pos.enabled}
+                onCheckedChange={() => toggleIntegration(pos.id)}
+              />
             </div>
 
             {/* Description */}
@@ -124,11 +117,12 @@ export default function PosPage() {
 
             {/* Action button when connected */}
             {pos.status === "connected" && (
-              <button className="mt-4 w-full text-sm font-medium text-emerald-700 bg-emerald-50 rounded-lg py-2 hover:bg-emerald-100 transition-colors">
+              <Button variant="secondary" className="mt-4 w-full text-sm font-medium text-emerald-700 bg-emerald-50 rounded-lg py-2 hover:bg-emerald-100">
                 Configure Settings
-              </button>
+              </Button>
             )}
-          </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 

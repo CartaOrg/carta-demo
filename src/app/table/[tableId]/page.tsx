@@ -32,7 +32,6 @@ import {
   menuItems,
   tables as mockTables,
   type MenuItem,
-  type Table,
 } from "@/lib/mock-data";
 import { useCustomerStore, useTablesStore } from "@/lib/store";
 import {
@@ -41,6 +40,8 @@ import {
   languages,
   getTranslations,
 } from "@/lib/translations";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -54,7 +55,6 @@ export default function CustomerTablePage() {
 
   const [view, setView] = useState<View>("welcome");
   const [locale, setLocale] = useState<Locale>("en");
-  const [table, setTable] = useState<Table | null>(null);
   const [activeCat, setActiveCat] = useState(categories[0].id);
   const [customRequest, setCustomRequest] = useState("");
   const [requestSent, setRequestSent] = useState<string | null>(null);
@@ -81,14 +81,16 @@ export default function CustomerTablePage() {
   } = useCustomerStore();
   const { addRequest } = useTablesStore();
 
-  // Find table data
+  const table = useMemo(
+    () => mockTables.find((tbl) => tbl.id === tableId) ?? null,
+    [tableId]
+  );
+
   useEffect(() => {
-    const found = mockTables.find((tbl) => tbl.id === tableId);
-    if (found) {
-      setTable(found);
-      setStoreTable(found.id);
+    if (table) {
+      setStoreTable(table.id);
     }
-  }, [tableId, setStoreTable]);
+  }, [table, setStoreTable]);
 
   // Computed
   const total = cartTotal();
@@ -152,9 +154,10 @@ export default function CustomerTablePage() {
         {/* Language selector */}
         <div className="absolute top-4 right-4 left-4 flex justify-end z-20">
           <div className="relative">
-            <button
+            <Button
               onClick={() => setShowLangPicker(!showLangPicker)}
-              className="flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl px-3 py-2 text-sm font-medium hover:bg-white/25 transition-all"
+              variant="ghost"
+              className="h-auto flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl px-3 py-2 text-sm font-medium hover:bg-white/25 text-white"
             >
               <Globe className="w-4 h-4" />
               <span>{currentLang.flag} {currentLang.nativeName}</span>
@@ -164,7 +167,7 @@ export default function CustomerTablePage() {
                   showLangPicker && "rotate-180"
                 )}
               />
-            </button>
+            </Button>
 
             {/* Language dropdown */}
             {showLangPicker && (
@@ -181,14 +184,15 @@ export default function CustomerTablePage() {
                   </div>
                   <div className="max-h-64 overflow-y-auto">
                     {languages.map((lang) => (
-                      <button
+                      <Button
                         key={lang.code}
                         onClick={() => {
                           setLocale(lang.code);
                           setShowLangPicker(false);
                         }}
+                        variant="ghost"
                         className={cn(
-                          "w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors",
+                          "h-auto w-full flex items-center gap-3 px-3 py-2.5 text-sm",
                           locale === lang.code
                             ? "bg-emerald-50 text-emerald-700 font-medium"
                             : "text-slate-700 hover:bg-slate-50"
@@ -202,7 +206,7 @@ export default function CustomerTablePage() {
                         {locale === lang.code && (
                           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                         )}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </div>
@@ -246,12 +250,12 @@ export default function CustomerTablePage() {
 
         {table && (
           <>
-            <button
+            <Button
               onClick={() => setView("menu")}
-              className="bg-white text-emerald-700 font-semibold text-lg px-8 py-4 rounded-2xl shadow-lg shadow-emerald-800/20 hover:bg-emerald-50 transition-all active:scale-95 w-full max-w-xs"
+              className="h-auto bg-white text-emerald-700 font-semibold text-lg px-8 py-4 rounded-2xl shadow-lg shadow-emerald-800/20 hover:bg-emerald-50 active:scale-95 w-full max-w-xs"
             >
               {t.startOrdering}
-            </button>
+            </Button>
             <p className="text-emerald-200 text-xs mt-4 text-center">
               {t.welcomeFooter}
             </p>
@@ -295,12 +299,14 @@ export default function CustomerTablePage() {
       <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-3">
           {view !== "menu" && (
-            <button
+            <Button
               onClick={() => setView("menu")}
-              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition"
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100"
             >
               <ArrowLeft className="w-5 h-5 text-slate-600" />
-            </button>
+            </Button>
           )}
           <div>
             <h1 className="text-lg font-bold text-slate-800">Carta</h1>
@@ -312,9 +318,10 @@ export default function CustomerTablePage() {
         <div className="flex items-center gap-2">
           {/* Language switcher (compact) */}
           <div className="relative">
-            <button
+            <Button
               onClick={() => setShowLangPicker(!showLangPicker)}
-              className="flex items-center gap-1 text-xs bg-slate-100 px-2 py-1.5 rounded-lg text-slate-600 hover:bg-slate-200 transition"
+              variant="ghost"
+              className="h-auto flex items-center gap-1 text-xs bg-slate-100 px-2 py-1.5 rounded-lg text-slate-600 hover:bg-slate-200"
             >
               <span>{currentLang.flag}</span>
               <ChevronDown
@@ -323,7 +330,7 @@ export default function CustomerTablePage() {
                   showLangPicker && "rotate-180"
                 )}
               />
-            </button>
+            </Button>
             {showLangPicker && (
               <>
                 <div
@@ -333,14 +340,15 @@ export default function CustomerTablePage() {
                 <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden z-20 w-48 animate-fade-in">
                   <div className="max-h-56 overflow-y-auto">
                     {languages.map((lang) => (
-                      <button
+                      <Button
                         key={lang.code}
                         onClick={() => {
                           setLocale(lang.code);
                           setShowLangPicker(false);
                         }}
+                        variant="ghost"
                         className={cn(
-                          "w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors",
+                          "h-auto w-full flex items-center gap-2 px-3 py-2 text-xs",
                           locale === lang.code
                             ? "bg-emerald-50 text-emerald-700 font-medium"
                             : "text-slate-600 hover:bg-slate-50"
@@ -348,7 +356,7 @@ export default function CustomerTablePage() {
                       >
                         <span>{lang.flag}</span>
                         <span>{lang.nativeName}</span>
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </div>
@@ -356,7 +364,7 @@ export default function CustomerTablePage() {
             )}
           </div>
           {/* Cart button */}
-          <button
+          <Button
             onClick={() => {
               if (orderStatus !== "idle") {
                 setView("tracker");
@@ -364,7 +372,8 @@ export default function CustomerTablePage() {
                 setView("cart");
               }
             }}
-            className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition"
+            variant="ghost"
+            className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
           >
             {orderStatus !== "idle" ? (
               <ClipboardList className="w-5 h-5" />
@@ -376,7 +385,7 @@ export default function CustomerTablePage() {
                 {count}
               </span>
             )}
-          </button>
+          </Button>
         </div>
       </header>
 
@@ -435,9 +444,9 @@ export default function CustomerTablePage() {
       {/* ── Sticky Cart Bar (menu view only, when cart has items) */}
       {view === "menu" && count > 0 && orderStatus === "idle" && (
         <div className="fixed bottom-20 left-0 right-0 z-20 px-4 max-w-lg mx-auto">
-          <button
+          <Button
             onClick={() => setView("cart")}
-            className="w-full bg-emerald-600 text-white rounded-2xl px-5 py-4 flex items-center justify-between shadow-lg shadow-emerald-600/30 hover:bg-emerald-700 transition active:scale-[0.98]"
+            className="h-auto w-full bg-emerald-600 text-white rounded-2xl px-5 py-4 flex items-center justify-between shadow-lg shadow-emerald-600/30 hover:bg-emerald-700 active:scale-[0.98]"
           >
             <div className="flex items-center gap-3">
               <span className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center text-sm font-bold">
@@ -446,7 +455,7 @@ export default function CustomerTablePage() {
               <span className="font-semibold">{t.viewCart}</span>
             </div>
             <span className="font-bold">${total.toFixed(2)}</span>
-          </button>
+          </Button>
         </div>
       )}
 
@@ -465,11 +474,12 @@ export default function CustomerTablePage() {
           ].map((tab) => {
             const isActive = view === tab.id;
             return (
-              <button
+              <Button
                 key={tab.id}
                 onClick={() => setView(tab.id)}
+                variant="ghost"
                 className={cn(
-                  "flex-1 flex flex-col items-center py-3 gap-1 transition-colors",
+                  "h-auto flex-1 flex flex-col items-center py-3 gap-1",
                   isActive
                     ? "text-emerald-600"
                     : "text-slate-400 hover:text-slate-600"
@@ -484,7 +494,7 @@ export default function CustomerTablePage() {
                   )}
                 </div>
                 <span className="text-[11px] font-medium">{tab.label}</span>
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -530,18 +540,19 @@ function MenuView({
       <div className="sticky top-[57px] z-20 bg-white border-b border-slate-100">
         <div className="flex gap-2 px-4 py-3 overflow-x-auto no-scrollbar">
           {cats.map((cat) => (
-            <button
+            <Button
               key={cat.id}
               onClick={() => setActiveCat(cat.id)}
+              variant="ghost"
               className={cn(
-                "flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all",
+                "h-auto flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium",
                 activeCat === cat.id
                   ? "bg-emerald-600 text-white shadow-md shadow-emerald-300/30"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               )}
             >
               {cat.name}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -588,10 +599,10 @@ function MenuView({
                   <span className="font-bold text-emerald-600">
                     ${item.price.toFixed(2)}
                   </span>
-                  <button
+                  <Button
                     onClick={() => onAddItem(item)}
                     className={cn(
-                      "flex items-center gap-1 px-3 py-1.5 rounded-xl text-sm font-medium transition-all active:scale-95",
+                      "h-auto flex items-center gap-1 px-3 py-1.5 rounded-xl text-sm font-medium active:scale-95",
                       justAdded
                         ? "bg-emerald-100 text-emerald-700"
                         : "bg-emerald-600 text-white hover:bg-emerald-700"
@@ -608,7 +619,7 @@ function MenuView({
                         {t.add}{inCart ? ` (${inCart.quantity})` : ""}
                       </>
                     )}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -659,12 +670,12 @@ function CartView({
         <p className="text-sm text-slate-400 mb-6">
           {t.cartEmptyDesc}
         </p>
-        <button
+        <Button
           onClick={onBack}
-          className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-emerald-700 transition"
+          className="h-auto bg-emerald-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-emerald-700"
         >
           {t.browseMenu}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -691,36 +702,42 @@ function CartView({
                   ${item.menuItem.price.toFixed(2)}
                 </p>
               </div>
-              <button
+              <Button
                 onClick={() => removeFromCart(item.menuItem.id)}
-                className="text-slate-300 hover:text-red-500 transition p-1"
+                variant="ghost"
+                size="icon"
+                className="text-slate-300 hover:text-red-500 p-1"
               >
                 <Trash2 className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
 
             {/* Quantity controls */}
             <div className="flex items-center justify-between mt-3">
               <div className="flex items-center gap-3 bg-slate-50 rounded-xl px-1 py-1">
-                <button
+                <Button
                   onClick={() =>
                     updateQuantity(item.menuItem.id, item.quantity - 1)
                   }
-                  className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center hover:bg-slate-100 transition"
+                  variant="outline"
+                  size="icon"
+                  className="w-8 h-8 rounded-lg bg-white border-slate-200 hover:bg-slate-100"
                 >
                   <Minus className="w-3.5 h-3.5 text-slate-600" />
-                </button>
+                </Button>
                 <span className="text-sm font-bold text-slate-800 w-5 text-center">
                   {item.quantity}
                 </span>
-                <button
+                <Button
                   onClick={() =>
                     updateQuantity(item.menuItem.id, item.quantity + 1)
                   }
-                  className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center hover:bg-slate-100 transition"
+                  variant="outline"
+                  size="icon"
+                  className="w-8 h-8 rounded-lg bg-white border-slate-200 hover:bg-slate-100"
                 >
                   <Plus className="w-3.5 h-3.5 text-slate-600" />
-                </button>
+                </Button>
               </div>
               <span className="font-bold text-slate-800 text-sm">
                 ${(item.menuItem.price * item.quantity).toFixed(2)}
@@ -728,7 +745,7 @@ function CartView({
             </div>
 
             {/* Special notes */}
-            <input
+            <Input
               type="text"
               placeholder={t.specialInstructions}
               value={item.notes}
@@ -759,13 +776,13 @@ function CartView({
       </div>
 
       {/* Place Order Button */}
-      <button
+      <Button
         onClick={onPlaceOrder}
-        className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-semibold text-lg shadow-lg shadow-emerald-600/30 hover:bg-emerald-700 transition active:scale-[0.98] flex items-center justify-center gap-2"
+        className="h-auto w-full bg-emerald-600 text-white py-4 rounded-2xl font-semibold text-lg shadow-lg shadow-emerald-600/30 hover:bg-emerald-700 active:scale-[0.98] flex items-center justify-center gap-2"
       >
         <Send className="w-5 h-5" />
         {t.placeOrder} · ${grandTotal.toFixed(2)}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -915,12 +932,12 @@ function TrackerView({
 
       {/* New order button (show when ready) */}
       {orderStatus === "ready" && (
-        <button
+        <Button
           onClick={onNewOrder}
-          className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-semibold shadow-lg shadow-emerald-600/30 hover:bg-emerald-700 transition active:scale-[0.98]"
+          className="h-auto w-full bg-emerald-600 text-white py-4 rounded-2xl font-semibold shadow-lg shadow-emerald-600/30 hover:bg-emerald-700 active:scale-[0.98]"
         >
           {t.orderMore}
-        </button>
+        </Button>
       )}
     </div>
   );
@@ -972,10 +989,11 @@ function RequestsView({
       {/* Quick requests grid */}
       <div className="grid grid-cols-2 gap-3 mb-8">
         {qr.map((req) => (
-          <button
+          <Button
             key={req.label}
             onClick={() => onSendRequest(req.message)}
-            className="bg-white rounded-2xl border border-slate-100 p-4 flex flex-col items-center gap-2 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all active:scale-95 group"
+            variant="outline"
+            className="h-auto bg-white rounded-2xl border-slate-100 p-4 flex flex-col items-center gap-2 shadow-sm hover:shadow-md hover:border-emerald-200 active:scale-95 group"
           >
             <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition">
               <req.icon className="w-6 h-6 text-emerald-600" />
@@ -983,7 +1001,7 @@ function RequestsView({
             <span className="text-sm font-medium text-slate-700">
               {req.label}
             </span>
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -993,7 +1011,7 @@ function RequestsView({
           {t.customRequest}
         </h3>
         <div className="flex gap-2">
-          <input
+          <Input
             type="text"
             placeholder={t.typePlaceholder}
             value={customRequest}
@@ -1001,13 +1019,13 @@ function RequestsView({
             onKeyDown={(e) => e.key === "Enter" && onCustomRequest()}
             className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition"
           />
-          <button
+          <Button
             onClick={onCustomRequest}
             disabled={!customRequest.trim()}
-            className="bg-emerald-600 text-white px-4 rounded-xl hover:bg-emerald-700 transition disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
+            className="h-auto bg-emerald-600 text-white px-4 rounded-xl hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
           >
             <Send className="w-5 h-5" />
-          </button>
+          </Button>
         </div>
       </div>
 

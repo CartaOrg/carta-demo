@@ -12,6 +12,9 @@ import {
   User,
   MapPin,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 const columns: { key: Order["status"]; label: string; color: string; icon: React.ElementType }[] = [
   { key: "new", label: "New Orders", color: "blue", icon: Clock },
@@ -53,7 +56,6 @@ export default function OrdersPage() {
         {columns.map((col) => {
           const colOrders = orders.filter((o) => o.status === col.key);
           const colors = colorMap[col.color];
-          const Icon = col.icon;
 
           return (
             <div key={col.key} className="flex flex-col">
@@ -71,16 +73,17 @@ export default function OrdersPage() {
               {/* Column body */}
               <div className={cn("flex-1 rounded-lg p-3 space-y-3 min-h-[300px]", colors.bg)}>
                 {colOrders.map((order) => (
-                  <div
+                  <Card
                     key={order.id}
-                    className="bg-white rounded-lg border border-border p-4 shadow-sm"
+                    className="gap-0 p-4 shadow-sm"
                   >
+                    <CardContent className="p-0">
                     {/* Order header */}
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-sm font-bold text-slate-900">
                         {order.orderNumber}
                       </span>
-                      <span
+                      <Badge
                         className={cn(
                           "text-xs font-medium px-2 py-0.5 rounded-full",
                           order.type === "dine-in"
@@ -91,7 +94,7 @@ export default function OrdersPage() {
                         )}
                       >
                         {order.type}
-                      </span>
+                      </Badge>
                     </div>
 
                     {/* Customer */}
@@ -130,18 +133,21 @@ export default function OrdersPage() {
                         ${order.total.toFixed(2)}
                       </span>
                       {nextStatus[order.status] && (
-                        <button
+                        <Button
                           onClick={() =>
                             moveOrder(order.id, nextStatus[order.status]!)
                           }
-                          className="flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-lg hover:bg-emerald-100 transition-colors"
+                          variant="secondary"
+                          size="sm"
+                          className="h-auto flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-lg hover:bg-emerald-100"
                         >
                           Move
                           <ArrowRight size={12} />
-                        </button>
+                        </Button>
                       )}
                     </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 ))}
 
                 {colOrders.length === 0 && (

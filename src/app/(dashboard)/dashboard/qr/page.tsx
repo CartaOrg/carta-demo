@@ -1,5 +1,7 @@
 import { QrCode, Download, Copy, Armchair } from "lucide-react";
 import { categories, tables } from "@/lib/mock-data";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function QrPage() {
   return (
@@ -26,10 +28,11 @@ export default function QrPage() {
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {tables.map((t) => (
-            <div
+            <Card
               key={t.id}
-              className="bg-white rounded-lg border border-border p-4 text-center hover:shadow-md transition-shadow"
+              className="gap-0 p-4 text-center hover:shadow-md transition-shadow"
             >
+              <CardContent className="p-0">
               <div className="w-20 h-20 mx-auto bg-emerald-50 rounded-xl flex items-center justify-center mb-3">
                 <QrCode size={36} className="text-emerald-500" />
               </div>
@@ -40,14 +43,15 @@ export default function QrPage() {
                 /table/{t.id} · {t.seats} seats
               </p>
               <div className="flex gap-1.5 justify-center">
-                <button className="flex items-center gap-1 text-[11px] font-medium text-white bg-emerald-600 px-2.5 py-1.5 rounded-lg hover:bg-emerald-700 transition-colors">
+                <Button size="sm" className="h-auto flex items-center gap-1 text-[11px] font-medium text-white bg-emerald-600 px-2.5 py-1.5 rounded-lg hover:bg-emerald-700">
                   <Download size={11} /> PNG
-                </button>
-                <button className="flex items-center gap-1 text-[11px] font-medium text-slate-600 bg-slate-100 px-2.5 py-1.5 rounded-lg hover:bg-slate-200 transition-colors">
+                </Button>
+                <Button variant="secondary" size="sm" className="h-auto flex items-center gap-1 text-[11px] font-medium text-slate-600 bg-slate-100 px-2.5 py-1.5 rounded-lg hover:bg-slate-200">
                   <Copy size={11} /> Link
-                </button>
+                </Button>
               </div>
-            </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </section>
@@ -63,28 +67,31 @@ export default function QrPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Main QR */}
-          <div className="bg-white rounded-lg border border-border p-6 text-center col-span-full lg:col-span-1 lg:row-span-2">
+          <Card className="gap-0 p-6 text-center col-span-full lg:col-span-1 lg:row-span-2">
+            <CardContent className="p-0">
             <div className="w-48 h-48 mx-auto bg-slate-100 rounded-xl flex items-center justify-center mb-4">
               <QrCode size={80} className="text-slate-300" />
             </div>
             <h3 className="text-sm font-semibold text-slate-900">Full Menu</h3>
             <p className="text-xs text-slate-400 mt-1 mb-4">/menu</p>
             <div className="flex gap-2 justify-center">
-              <button className="flex items-center gap-1.5 text-xs font-medium text-white bg-emerald-600 px-3 py-2 rounded-lg hover:bg-emerald-700 transition-colors">
+              <Button size="sm" className="h-auto flex items-center gap-1.5 text-xs font-medium text-white bg-emerald-600 px-3 py-2 rounded-lg hover:bg-emerald-700">
                 <Download size={12} /> Download PNG
-              </button>
-              <button className="flex items-center gap-1.5 text-xs font-medium text-slate-600 bg-slate-100 px-3 py-2 rounded-lg hover:bg-slate-200 transition-colors">
+              </Button>
+              <Button variant="secondary" size="sm" className="h-auto flex items-center gap-1.5 text-xs font-medium text-slate-600 bg-slate-100 px-3 py-2 rounded-lg hover:bg-slate-200">
                 <Copy size={12} /> Copy Link
-              </button>
+              </Button>
             </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Category QRs */}
           {categories.map((cat) => (
-            <div
+            <Card
               key={cat.id}
-              className="bg-white rounded-lg border border-border p-5 flex items-center gap-4"
+              className="gap-0 p-5 flex items-center"
             >
+              <CardContent className="p-0 flex items-center gap-4 w-full">
               <div className="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center shrink-0">
                 <QrCode size={28} className="text-slate-300" />
               </div>
@@ -94,10 +101,11 @@ export default function QrPage() {
                 </h3>
                 <p className="text-xs text-slate-400">/menu/{cat.slug}</p>
               </div>
-              <button className="p-2 rounded-lg hover:bg-slate-50 transition-colors">
+              <Button variant="ghost" size="icon" className="p-2 rounded-lg hover:bg-slate-50">
                 <Download size={16} className="text-slate-400" />
-              </button>
-            </div>
+              </Button>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </section>

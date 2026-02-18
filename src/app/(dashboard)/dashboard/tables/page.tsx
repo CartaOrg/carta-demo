@@ -1,19 +1,22 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useSyncExternalStore } from "react";
 import { useTablesStore } from "@/lib/store";
 import type { Table } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 import {
   Eye,
   Pencil,
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
   Users,
   AlertTriangle,
   CheckCircle2,
   Clock,
   X,
   MessageSquare,
-  CircleDot,
   Square,
   RectangleHorizontal,
   Circle,
@@ -26,9 +29,30 @@ import {
   GripVertical,
   Trash2,
   ImagePlus,
+  Copy,
+  SlidersHorizontal,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 type Mode = "edit" | "live";
+type DragState = {
+  id: string;
+  offsetX: number;
+  offsetY: number;
+  pointerId: number;
+};
+
+const FLOOR_PLAN_STORAGE_KEY = "carta-floor-plan-settings-v1";
+const TABLE_GRID_STEP = 2;
+const DEFAULT_FLOOR_PLAN_SETTINGS = {
+  image: null as string | null,
+  opacity: 70,
+  scale: 100,
+  fit: "cover" as "cover" | "contain",
+  offsetX: 0,
+  offsetY: 0,
+};
 
 const statusConfig = {
   available: { color: "bg-emerald-500", ring: "ring-emerald-200", label: "Available", textColor: "text-emerald-700", bgLight: "bg-emerald-50" },
@@ -37,16 +61,51 @@ const statusConfig = {
   "needs-attention": { color: "bg-red-500", ring: "ring-red-200", label: "Needs Attention", textColor: "text-red-700", bgLight: "bg-red-50" },
 };
 
+function getInitialFloorPlanSettings() {
+  if (typeof window === "undefined") return DEFAULT_FLOOR_PLAN_SETTINGS;
+
+  const raw = window.localStorage.getItem(FLOOR_PLAN_STORAGE_KEY);
+  if (!raw) return DEFAULT_FLOOR_PLAN_SETTINGS;
+
+  try {
+    const parsed = JSON.parse(raw) as {
+      image: string | null;
+      opacity: number;
+      scale: number;
+      fit: "cover" | "contain";
+      offsetX: number;
+      offsetY: number;
+    };
+
+    return {
+      image: parsed.image,
+      opacity: parsed.opacity ?? 70,
+      scale: parsed.scale ?? 100,
+      fit: parsed.fit ?? "cover",
+      offsetX: parsed.offsetX ?? 0,
+      offsetY: parsed.offsetY ?? 0,
+    };
+  } catch {
+    window.localStorage.removeItem(FLOOR_PLAN_STORAGE_KEY);
+    return DEFAULT_FLOOR_PLAN_SETTINGS;
+  }
+}
+
 export default function TableMapPage() {
   const [mode, setMode] = useState<Mode>("live");
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
-  const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [floorPlanImage, setFloorPlanImage] = useState<string | null>(null);
-  const [floorPlanOpacity, setFloorPlanOpacity] = useState<number>(70);
-  const [floorPlanScale, setFloorPlanScale] = useState<number>(100);
-  const [floorPlanFit, setFloorPlanFit] = useState<"cover" | "contain">("cover");
-  const [floorPlanOffsetX, setFloorPlanOffsetX] = useState<number>(0);
-  const [floorPlanOffsetY, setFloorPlanOffsetY] = useState<number>(0);
+  const [dragState, setDragState] = useState<DragState | null>(null);
+  const [snapToGrid, setSnapToGrid] = useState(true);
+  const [suppressClickUntil, setSuppressClickUntil] = useState(0);
+  const [showEditorTools, setShowEditorTools] = useState(true);
+  const [showFloorAdjustments, setShowFloorAdjustments] = useState(false);
+  const [initialFloorPlan] = useState(getInitialFloorPlanSettings);
+  const [floorPlanImage, setFloorPlanImage] = useState<string | null>(initialFloorPlan.image);
+  const [floorPlanOpacity, setFloorPlanOpacity] = useState<number>(initialFloorPlan.opacity);
+  const [floorPlanScale, setFloorPlanScale] = useState<number>(initialFloorPlan.scale);
+  const [floorPlanFit, setFloorPlanFit] = useState<"cover" | "contain">(initialFloorPlan.fit);
+  const [floorPlanOffsetX, setFloorPlanOffsetX] = useState<number>(initialFloorPlan.offsetX);
+  const [floorPlanOffsetY, setFloorPlanOffsetY] = useState<number>(initialFloorPlan.offsetY);
   const [floorPlanError, setFloorPlanError] = useState<string | null>(null);
   const floorRef = useRef<HTMLDivElement>(null);
   const floorPlanInputRef = useRef<HTMLInputElement>(null);
@@ -54,6 +113,18 @@ export default function TableMapPage() {
   const moveTable = useTablesStore((s) => s.moveTable);
   const addTable = useTablesStore((s) => s.addTable);
   const deleteTable = useTablesStore((s) => s.deleteTable);
+  const updateTable = useTablesStore((s) => s.updateTable);
+
+  const draggingId = dragState?.id ?? null;
+  const isHydrated = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+  const visibleFloorPlanImage = isHydrated ? floorPlanImage : null;
+  const selectedTableData = selectedTable
+    ? tables.find((table) => table.id === selectedTable)
+    : null;
 
   const unresolvedCount = tables.reduce(
     (sum, t) => sum + (t.requests?.filter((r) => !r.resolved).length || 0),
@@ -61,31 +132,6 @@ export default function TableMapPage() {
   );
 
   // ── Floor plan persistence (localStorage) ──
-  const FLOOR_PLAN_STORAGE_KEY = "carta-floor-plan-settings-v1";
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const raw = window.localStorage.getItem(FLOOR_PLAN_STORAGE_KEY);
-    if (!raw) return;
-    try {
-      const parsed = JSON.parse(raw) as {
-        image: string | null;
-        opacity: number;
-        scale: number;
-        fit: "cover" | "contain";
-        offsetX: number;
-        offsetY: number;
-      };
-      setFloorPlanImage(parsed.image);
-      setFloorPlanOpacity(parsed.opacity ?? 70);
-      setFloorPlanScale(parsed.scale ?? 100);
-      setFloorPlanFit(parsed.fit ?? "cover");
-      setFloorPlanOffsetX(parsed.offsetX ?? 0);
-      setFloorPlanOffsetY(parsed.offsetY ?? 0);
-    } catch (err) {
-      window.localStorage.removeItem(FLOOR_PLAN_STORAGE_KEY);
-    }
-  }, []);
 
   const saveFloorPlanSettings = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -105,20 +151,157 @@ export default function TableMapPage() {
   }, [floorPlanImage, floorPlanOpacity, floorPlanScale, floorPlanFit, floorPlanOffsetX, floorPlanOffsetY, saveFloorPlanSettings]);
 
   // ── Drag handlers (pointer events on the floor plan) ──
-  const handlePointerMove = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!draggingId || mode !== "edit" || !floorRef.current) return;
-      const rect = floorRef.current.getBoundingClientRect();
-      const x = Math.min(95, Math.max(5, ((e.clientX - rect.left) / rect.width) * 100));
-      const y = Math.min(95, Math.max(5, ((e.clientY - rect.top) / rect.height) * 100));
-      moveTable(draggingId, Math.round(x), Math.round(y));
+  const clamp = useCallback((value: number, min = 5, max = 95) => Math.min(max, Math.max(min, value)), []);
+
+  const applySnap = useCallback(
+    (value: number) => {
+      if (!snapToGrid) return Math.round(value * 10) / 10;
+      return Math.round(value / TABLE_GRID_STEP) * TABLE_GRID_STEP;
     },
-    [draggingId, mode, moveTable]
+    [snapToGrid]
   );
 
-  const handlePointerUp = useCallback(() => {
-    setDraggingId(null);
+  const stopDragging = useCallback(() => {
+    setSuppressClickUntil(Date.now() + 150);
+    setDragState(null);
   }, []);
+
+  const moveSelectedTableBy = useCallback(
+    (deltaX: number, deltaY: number) => {
+      if (!selectedTableData) return;
+      const nextX = clamp(applySnap(selectedTableData.x + deltaX));
+      const nextY = clamp(applySnap(selectedTableData.y + deltaY));
+      moveTable(selectedTableData.id, nextX, nextY);
+    },
+    [selectedTableData, moveTable, applySnap, clamp]
+  );
+
+  const duplicateSelectedTable = useCallback(() => {
+    if (!selectedTableData) return;
+    const newTableId = addTable();
+    updateTable(newTableId, {
+      label: `${selectedTableData.label} Copy`,
+      seats: selectedTableData.seats,
+      shape: selectedTableData.shape,
+      status: "available",
+      guestCount: 0,
+      requests: [],
+      x: clamp(selectedTableData.x + 6),
+      y: clamp(selectedTableData.y + 6),
+      orderId: undefined,
+    });
+    setSelectedTable(newTableId);
+  }, [selectedTableData, addTable, updateTable, clamp]);
+
+  const handleTableDragStart = useCallback(
+    (tableId: string, event: React.PointerEvent) => {
+      if (mode !== "edit" || !floorRef.current) return;
+      const table = tables.find((item) => item.id === tableId);
+      if (!table) return;
+
+      const rect = floorRef.current.getBoundingClientRect();
+      const pointerX = ((event.clientX - rect.left) / rect.width) * 100;
+      const pointerY = ((event.clientY - rect.top) / rect.height) * 100;
+
+      setDragState({
+        id: tableId,
+        offsetX: pointerX - table.x,
+        offsetY: pointerY - table.y,
+        pointerId: event.pointerId,
+      });
+      setSelectedTable(tableId);
+
+      if (event.currentTarget instanceof HTMLElement) {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      }
+    },
+    [mode, tables]
+  );
+
+  useEffect(() => {
+    if (!dragState || mode !== "edit") return;
+
+    const handleWindowPointerMove = (event: PointerEvent) => {
+      if (event.pointerId !== dragState.pointerId || !floorRef.current) return;
+      const rect = floorRef.current.getBoundingClientRect();
+      const pointerX = ((event.clientX - rect.left) / rect.width) * 100;
+      const pointerY = ((event.clientY - rect.top) / rect.height) * 100;
+      const nextX = clamp(applySnap(pointerX - dragState.offsetX));
+      const nextY = clamp(applySnap(pointerY - dragState.offsetY));
+      moveTable(dragState.id, nextX, nextY);
+    };
+
+    const handleWindowPointerUp = (event: PointerEvent) => {
+      if (event.pointerId !== dragState.pointerId) return;
+      stopDragging();
+    };
+
+    window.addEventListener("pointermove", handleWindowPointerMove);
+    window.addEventListener("pointerup", handleWindowPointerUp);
+    window.addEventListener("pointercancel", handleWindowPointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", handleWindowPointerMove);
+      window.removeEventListener("pointerup", handleWindowPointerUp);
+      window.removeEventListener("pointercancel", handleWindowPointerUp);
+    };
+  }, [dragState, mode, clamp, applySnap, moveTable, stopDragging]);
+
+  const handleFloorWheel = useCallback(
+    (event: React.WheelEvent<HTMLDivElement>) => {
+      if (mode !== "edit" || !visibleFloorPlanImage) return;
+      if (!event.ctrlKey && !event.metaKey) return;
+      event.preventDefault();
+
+      setFloorPlanScale((current) => {
+        const delta = event.deltaY < 0 ? 4 : -4;
+        return clamp(current + delta, 50, 220);
+      });
+    },
+    [mode, visibleFloorPlanImage, clamp]
+  );
+
+  useEffect(() => {
+    if (mode !== "edit") return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!selectedTableData) return;
+
+      if (event.key === "Backspace" || event.key === "Delete") {
+        event.preventDefault();
+        deleteTable(selectedTableData.id);
+        setSelectedTable(null);
+        return;
+      }
+
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "d") {
+        event.preventDefault();
+        duplicateSelectedTable();
+        return;
+      }
+
+      const step = event.shiftKey ? 5 : 1;
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        moveSelectedTableBy(0, -step);
+      }
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        moveSelectedTableBy(0, step);
+      }
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        moveSelectedTableBy(-step, 0);
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        moveSelectedTableBy(step, 0);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mode, selectedTableData, moveSelectedTableBy, deleteTable, duplicateSelectedTable]);
 
   const handleFloorPlanFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -161,68 +344,27 @@ export default function TableMapPage() {
   };
 
   return (
-    <div className="space-y-5 h-full flex flex-col">
+    <div className="space-y-3 h-full flex flex-col">
+      <input
+        ref={floorPlanInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/*"
+        className="hidden"
+        onChange={handleFloorPlanFileChange}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Table Map</h1>
           <p className="text-sm text-slate-500 mt-1">
             {mode === "edit"
-              ? "Drag tables to reposition. Click to edit details."
+              ? "Focus mode for layout editing — tools moved into the canvas."
               : "Live view — see real-time orders and customer requests."}
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          {mode === "edit" && (
-            <>
-              <input
-                ref={floorPlanInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/*"
-                className="hidden"
-                onChange={handleFloorPlanFileChange}
-              />
-              <button
-                onClick={() => floorPlanInputRef.current?.click()}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-border text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
-              >
-                <ImagePlus size={14} />
-                {floorPlanImage ? "Change Plan" : "Add Plan"}
-              </button>
-              {floorPlanImage && (
-                <button
-                  onClick={() => {
-                    setFloorPlanImage(null);
-                    setFloorPlanOpacity(70);
-                    setFloorPlanScale(100);
-                    setFloorPlanFit("cover");
-                    setFloorPlanOffsetX(0);
-                    setFloorPlanOffsetY(0);
-                    setFloorPlanError(null);
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 border border-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
-                >
-                  <Trash2 size={14} />
-                  Remove Plan
-                </button>
-              )}
-            </>
-          )}
-
-          {mode === "edit" && (
-            <button
-              onClick={() => {
-                const newTableId = addTable();
-                setSelectedTable(newTableId);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
-            >
-              <Plus size={14} />
-              Add Table
-            </button>
-          )}
-
           {/* Unresolved badge */}
           {unresolvedCount > 0 && mode === "live" && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 border border-red-100 rounded-lg text-red-700 text-xs font-medium">
@@ -246,7 +388,10 @@ export default function TableMapPage() {
               Edit
             </button>
             <button
-              onClick={() => setMode("live")}
+              onClick={() => {
+                setMode("live");
+                setDragState(null);
+              }}
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
                 mode === "live"
@@ -279,143 +424,47 @@ export default function TableMapPage() {
       )}
 
       {/* Legend + Stats bar */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          {Object.entries(statusConfig).map(([key, cfg]) => (
-            <div key={key} className="flex items-center gap-1.5">
-              <div className={cn("w-2.5 h-2.5 rounded-full", cfg.color)} />
-              <span className="text-xs text-slate-500">{cfg.label}</span>
-            </div>
-          ))}
-        </div>
-        <div className="flex items-center gap-4 text-xs text-slate-400">
-          <span>{tables.filter((t) => t.status === "available").length} open</span>
-          <span>{tables.filter((t) => t.status === "occupied").length} occupied</span>
-          <span>{tables.reduce((s, t) => s + (t.guestCount || 0), 0)} guests</span>
-        </div>
-      </div>
-
-      {/* Floor plan adjustment controls */}
-      {mode === "edit" && floorPlanImage && (
-        <div className="bg-slate-50 border border-border rounded-lg p-4 space-y-3">
-          <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Floor Plan Adjustments</div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            {/* Opacity */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-slate-600">Opacity</label>
-                <span className="text-xs text-slate-500">{floorPlanOpacity}%</span>
+      {mode === "live" && (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            {Object.entries(statusConfig).map(([key, cfg]) => (
+              <div key={key} className="flex items-center gap-1.5">
+                <div className={cn("w-2.5 h-2.5 rounded-full", cfg.color)} />
+                <span className="text-xs text-slate-500">{cfg.label}</span>
               </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={floorPlanOpacity}
-                onChange={(e) => setFloorPlanOpacity(Number(e.target.value))}
-                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
-              />
-            </div>
-
-            {/* Zoom / Scale */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-slate-600">Zoom</label>
-                <span className="text-xs text-slate-500">{floorPlanScale}%</span>
-              </div>
-              <input
-                type="range"
-                min="50"
-                max="200"
-                value={floorPlanScale}
-                onChange={(e) => setFloorPlanScale(Number(e.target.value))}
-                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
-              />
-            </div>
-
-            {/* Fit Mode */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-600">Fit</label>
-              <select
-                value={floorPlanFit}
-                onChange={(e) => setFloorPlanFit(e.target.value as "cover" | "contain")}
-                className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md bg-white cursor-pointer hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-              >
-                <option value="cover">Cover</option>
-                <option value="contain">Contain</option>
-              </select>
-            </div>
-
-            {/* Offset X */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-slate-600">Offset X</label>
-                <span className="text-xs text-slate-500">{floorPlanOffsetX}px</span>
-              </div>
-              <input
-                type="range"
-                min="-100"
-                max="100"
-                value={floorPlanOffsetX}
-                onChange={(e) => setFloorPlanOffsetX(Number(e.target.value))}
-                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
-              />
-            </div>
-
-            {/* Offset Y */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-slate-600">Offset Y</label>
-                <span className="text-xs text-slate-500">{floorPlanOffsetY}px</span>
-              </div>
-              <input
-                type="range"
-                min="-100"
-                max="100"
-                value={floorPlanOffsetY}
-                onChange={(e) => setFloorPlanOffsetY(Number(e.target.value))}
-                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
-              />
-            </div>
+            ))}
           </div>
-
-          {/* Reset button */}
-          <div className="flex justify-end">
-            <button
-              onClick={() => {
-                setFloorPlanOpacity(70);
-                setFloorPlanScale(100);
-                setFloorPlanFit("cover");
-                setFloorPlanOffsetX(0);
-                setFloorPlanOffsetY(0);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 hover:border-slate-300 transition-colors"
-            >
-              <RotateCcw size={12} />
-              Reset
-            </button>
+          <div className="flex items-center gap-4 text-xs text-slate-400">
+            <span>{tables.filter((t) => t.status === "available").length} open</span>
+            <span>{tables.filter((t) => t.status === "occupied").length} occupied</span>
+            <span>{tables.reduce((s, t) => s + (t.guestCount || 0), 0)} guests</span>
           </div>
         </div>
       )}
 
       {/* Main content area */}
-      <div className="flex-1 flex gap-5 min-h-0">
+      <div className={cn("flex-1 min-h-0", mode === "live" ? "flex gap-5" : "relative")}>
         {/* Floor Plan */}
         <div
           ref={floorRef}
           className={cn(
-            "flex-1 bg-white rounded-xl border border-border relative overflow-hidden",
+            "bg-white rounded-xl border border-border relative overflow-hidden",
+            mode === "live" ? "flex-1" : "h-full min-h-[72vh]",
             mode === "edit" && "cursor-crosshair",
             draggingId && "cursor-grabbing"
           )}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerLeave={handlePointerUp}
+          onWheel={handleFloorWheel}
+          onPointerDown={(event) => {
+            if (event.target === event.currentTarget && mode === "edit") {
+              setSelectedTable(null);
+            }
+          }}
         >
           {/* Floor plan image (always below table nodes) */}
-          {floorPlanImage && (
+          {visibleFloorPlanImage && (
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
               <img
-                src={floorPlanImage}
+                src={visibleFloorPlanImage}
                 alt="Store floor plan"
                 className={cn(
                   "w-full h-full transition-all duration-200",
@@ -434,10 +483,240 @@ export default function TableMapPage() {
           <div
             className="absolute inset-0 opacity-[0.03] pointer-events-none"
             style={{
-              backgroundImage: "radial-gradient(circle, #000 1px, transparent 1px)",
+              backgroundImage: snapToGrid
+                ? "radial-gradient(circle, #000 1px, transparent 1px)"
+                : "none",
               backgroundSize: "24px 24px",
             }}
           />
+
+          {mode === "edit" && (
+            <div className="absolute top-3 left-3 z-40 w-[340px] max-w-[calc(100%-1.5rem)]">
+              <div className="bg-white/95 backdrop-blur border border-border rounded-xl shadow-sm p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 uppercase tracking-wide">
+                    <SlidersHorizontal size={12} /> Layout Tools
+                  </div>
+                  <button
+                    onClick={() => setShowEditorTools((value) => !value)}
+                    className="p-1 rounded hover:bg-slate-100 text-slate-500"
+                    title={showEditorTools ? "Collapse tools" : "Expand tools"}
+                  >
+                    {showEditorTools ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  </button>
+                </div>
+
+                {showEditorTools && (
+                  <div className="mt-3 space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => {
+                          const newTableId = addTable();
+                          setSelectedTable(newTableId);
+                        }}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition-colors"
+                      >
+                        <Plus size={12} /> Add Table
+                      </button>
+
+                      <button
+                        onClick={() => floorPlanInputRef.current?.click()}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-border text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-50 transition-colors"
+                      >
+                        <ImagePlus size={12} />
+                        {visibleFloorPlanImage ? "Change Plan" : "Add Plan"}
+                      </button>
+
+                      {visibleFloorPlanImage && (
+                        <button
+                          onClick={() => {
+                            setFloorPlanImage(null);
+                            setFloorPlanOpacity(70);
+                            setFloorPlanScale(100);
+                            setFloorPlanFit("cover");
+                            setFloorPlanOffsetX(0);
+                            setFloorPlanOffsetY(0);
+                            setFloorPlanError(null);
+                          }}
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-red-50 border border-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-100 transition-colors"
+                        >
+                          <Trash2 size={12} /> Remove Plan
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-4 gap-1.5">
+                      <button
+                        onClick={() => moveSelectedTableBy(0, -1)}
+                        disabled={!selectedTableData}
+                        className="p-1.5 rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                        title="Nudge up"
+                      >
+                        <ArrowUp size={14} className="mx-auto" />
+                      </button>
+                      <button
+                        onClick={() => moveSelectedTableBy(0, 1)}
+                        disabled={!selectedTableData}
+                        className="p-1.5 rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                        title="Nudge down"
+                      >
+                        <ArrowDown size={14} className="mx-auto" />
+                      </button>
+                      <button
+                        onClick={() => moveSelectedTableBy(-1, 0)}
+                        disabled={!selectedTableData}
+                        className="p-1.5 rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                        title="Nudge left"
+                      >
+                        <ArrowLeft size={14} className="mx-auto" />
+                      </button>
+                      <button
+                        onClick={() => moveSelectedTableBy(1, 0)}
+                        disabled={!selectedTableData}
+                        className="p-1.5 rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                        title="Nudge right"
+                      >
+                        <ArrowRight size={14} className="mx-auto" />
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={() => setSnapToGrid((value) => !value)}
+                        className={cn(
+                          "px-2.5 py-1.5 rounded-md text-xs font-medium border transition-colors",
+                          snapToGrid
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                        )}
+                      >
+                        Snap {snapToGrid ? "On" : "Off"}
+                      </button>
+
+                      <button
+                        onClick={duplicateSelectedTable}
+                        disabled={!selectedTableData}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <Copy size={12} /> Duplicate
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          if (!selectedTableData) return;
+                          deleteTable(selectedTableData.id);
+                          setSelectedTable(null);
+                        }}
+                        disabled={!selectedTableData}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium border border-red-100 text-red-700 bg-red-50 hover:bg-red-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <Trash2 size={12} /> Delete
+                      </button>
+                    </div>
+
+                    {visibleFloorPlanImage && (
+                      <div className="pt-1 border-t border-slate-200">
+                        <button
+                          onClick={() => setShowFloorAdjustments((value) => !value)}
+                          className="w-full flex items-center justify-between px-2 py-1.5 rounded-md text-xs font-medium text-slate-600 hover:bg-slate-50"
+                        >
+                          <span>Floor Plan Adjustments</span>
+                          {showFloorAdjustments ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        </button>
+
+                        {showFloorAdjustments && (
+                          <div className="mt-2 grid grid-cols-2 gap-2.5">
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between text-[11px] text-slate-500">
+                                <label>Opacity</label>
+                                <span>{floorPlanOpacity}%</span>
+                              </div>
+                              <input
+                                type="range"
+                                min="0"
+                                max="100"
+                                value={floorPlanOpacity}
+                                onChange={(e) => setFloorPlanOpacity(Number(e.target.value))}
+                                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between text-[11px] text-slate-500">
+                                <label>Zoom</label>
+                                <span>{floorPlanScale}%</span>
+                              </div>
+                              <input
+                                type="range"
+                                min="50"
+                                max="220"
+                                value={floorPlanScale}
+                                onChange={(e) => setFloorPlanScale(Number(e.target.value))}
+                                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between text-[11px] text-slate-500">
+                                <label>Offset X</label>
+                                <span>{floorPlanOffsetX}px</span>
+                              </div>
+                              <input
+                                type="range"
+                                min="-100"
+                                max="100"
+                                value={floorPlanOffsetX}
+                                onChange={(e) => setFloorPlanOffsetX(Number(e.target.value))}
+                                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between text-[11px] text-slate-500">
+                                <label>Offset Y</label>
+                                <span>{floorPlanOffsetY}px</span>
+                              </div>
+                              <input
+                                type="range"
+                                min="-100"
+                                max="100"
+                                value={floorPlanOffsetY}
+                                onChange={(e) => setFloorPlanOffsetY(Number(e.target.value))}
+                                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                              />
+                            </div>
+
+                            <div className="col-span-2 flex items-center justify-between gap-2">
+                              <select
+                                value={floorPlanFit}
+                                onChange={(e) => setFloorPlanFit(e.target.value as "cover" | "contain")}
+                                className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md bg-white cursor-pointer hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                              >
+                                <option value="cover">Cover</option>
+                                <option value="contain">Contain</option>
+                              </select>
+                              <button
+                                onClick={() => {
+                                  setFloorPlanOpacity(70);
+                                  setFloorPlanScale(100);
+                                  setFloorPlanFit("cover");
+                                  setFloorPlanOffsetX(0);
+                                  setFloorPlanOffsetY(0);
+                                }}
+                                className="shrink-0 flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-100"
+                              >
+                                <RotateCcw size={12} /> Reset
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Floor labels */}
           <div className="absolute top-3 left-4 text-[10px] font-semibold text-slate-300 uppercase tracking-widest">
@@ -461,17 +740,35 @@ export default function TableMapPage() {
               mode={mode}
               isSelected={selectedTable === table.id}
               isDragging={draggingId === table.id}
+              suppressClickUntil={suppressClickUntil}
               onClick={() => setSelectedTable(selectedTable === table.id ? null : table.id)}
-              onDragStart={() => {
-                if (mode === "edit") setDraggingId(table.id);
-              }}
+              onDragStart={(event) => handleTableDragStart(table.id, event)}
             />
           ))}
         </div>
 
         {/* Side Panel */}
-        {selectedTable && (
+        {selectedTable && mode === "edit" && (
+          <div className="absolute right-3 top-3 bottom-3 z-40 w-80 max-w-[calc(100%-1.5rem)]">
+            <TableDetailPanel
+              key={selectedTable}
+              className="w-full h-full"
+              tableId={selectedTable}
+              mode={mode}
+              onClose={() => setSelectedTable(null)}
+              onDelete={() => {
+                if (!selectedTable) return;
+                deleteTable(selectedTable);
+                setSelectedTable(null);
+                setDragState(null);
+              }}
+            />
+          </div>
+        )}
+
+        {selectedTable && mode === "live" && (
           <TableDetailPanel
+            key={selectedTable}
             tableId={selectedTable}
             mode={mode}
             onClose={() => setSelectedTable(null)}
@@ -479,7 +776,7 @@ export default function TableMapPage() {
               if (!selectedTable) return;
               deleteTable(selectedTable);
               setSelectedTable(null);
-              setDraggingId(null);
+              setDragState(null);
             }}
           />
         )}
@@ -495,6 +792,7 @@ function TableNode({
   mode,
   isSelected,
   isDragging,
+  suppressClickUntil,
   onClick,
   onDragStart,
 }: {
@@ -502,8 +800,9 @@ function TableNode({
   mode: Mode;
   isSelected: boolean;
   isDragging: boolean;
+  suppressClickUntil: number;
   onClick: () => void;
-  onDragStart: () => void;
+  onDragStart: (event: React.PointerEvent) => void;
 }) {
   const cfg = statusConfig[table.status];
   const unresolvedRequests = (table.requests || []).filter((r) => !r.resolved);
@@ -527,13 +826,13 @@ function TableNode({
   const handlePointerDown = (e: React.PointerEvent) => {
     if (mode === "edit") {
       e.preventDefault();
-      onDragStart();
+      e.stopPropagation();
+      onDragStart(e);
     }
   };
 
-  const handleClick = (e: React.MouseEvent) => {
-    // Don't fire click when finishing a drag
-    if (mode === "edit" && isDragging) return;
+  const handleClick = () => {
+    if (mode === "edit" && Date.now() < suppressClickUntil) return;
     onClick();
   };
 
@@ -598,11 +897,13 @@ function TableNode({
 // ── Side Detail Panel ───────────────────────────────────────
 
 function TableDetailPanel({
+  className,
   tableId,
   mode,
   onClose,
   onDelete,
 }: {
+  className?: string;
   tableId: string;
   mode: Mode;
   onClose: () => void;
@@ -625,7 +926,7 @@ function TableDetailPanel({
   const resolvedRequests = (table.requests || []).filter((r) => r.resolved);
 
   return (
-    <div className="w-80 bg-white rounded-xl border border-border flex flex-col overflow-hidden shrink-0">
+    <div className={cn("w-80 bg-white rounded-xl border border-border flex flex-col overflow-hidden shrink-0", className)}>
       {/* Panel header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-slate-50">
         <div className="flex items-center gap-2">

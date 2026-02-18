@@ -14,6 +14,12 @@ import {
   Tag,
   Check,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function MenuPage() {
   const [activeCategory, setActiveCategory] = useState(categories[0].id);
@@ -38,10 +44,10 @@ export default function MenuPage() {
             Manage your digital menu. Click any item to edit details.
           </p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">
+        <Button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700">
           <Plus size={16} />
           Add Item
-        </button>
+        </Button>
       </div>
 
       <div className="flex gap-6">
@@ -52,18 +58,19 @@ export default function MenuPage() {
               Categories
             </p>
             {categories.map((cat) => (
-              <button
+              <Button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
                 className={cn(
-                  "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors",
+                  "h-auto w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm",
                   activeCategory === cat.id
                     ? "bg-emerald-50 text-emerald-700 font-medium"
                     : "text-slate-600 hover:bg-slate-50"
                 )}
+                variant="ghost"
               >
                 <span>{cat.name}</span>
-                <span
+                <Badge
                   className={cn(
                     "text-xs px-1.5 py-0.5 rounded",
                     activeCategory === cat.id
@@ -72,8 +79,8 @@ export default function MenuPage() {
                   )}
                 >
                   {cat.itemCount}
-                </span>
-              </button>
+                </Badge>
+              </Button>
             ))}
           </div>
         </div>
@@ -83,22 +90,23 @@ export default function MenuPage() {
           {/* Search */}
           <div className="flex items-center gap-2 bg-white border border-border rounded-lg px-3 py-2 mb-4">
             <Search size={16} className="text-slate-400" />
-            <input
+            <Input
               type="text"
               placeholder="Search items..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-transparent text-sm text-slate-700 placeholder:text-slate-400 outline-none w-full"
+              className="h-auto border-0 shadow-none bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus-visible:ring-0"
             />
           </div>
 
           {/* Item cards */}
           <div className="space-y-2">
             {filteredItems.map((item) => (
-              <button
+              <Button
                 key={item.id}
                 onClick={() => setSelectedItem(item)}
-                className="w-full bg-white rounded-lg border border-border p-4 flex items-center gap-4 hover:border-emerald-200 hover:shadow-sm transition-all text-left group"
+                variant="outline"
+                className="w-full h-auto bg-white rounded-lg border-border p-4 flex items-center gap-4 hover:border-emerald-200 hover:shadow-sm transition-all text-left group justify-start"
               >
                 <GripVertical
                   size={16}
@@ -117,9 +125,9 @@ export default function MenuPage() {
                       {item.name}
                     </h3>
                     {item.tags.includes("popular") && (
-                      <span className="text-xs bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded font-medium">
+                      <Badge className="text-xs bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded font-medium">
                         Popular
-                      </span>
+                      </Badge>
                     )}
                   </div>
                   <p className="text-xs text-slate-400 mt-0.5 truncate">
@@ -132,7 +140,7 @@ export default function MenuPage() {
                   <span className="text-sm font-semibold text-slate-900">
                     ${item.price.toFixed(2)}
                   </span>
-                  <span
+                  <Badge
                     className={cn(
                       "text-xs font-medium px-2 py-1 rounded-full",
                       item.available
@@ -141,13 +149,13 @@ export default function MenuPage() {
                     )}
                   >
                     {item.available ? "Available" : "Unavailable"}
-                  </span>
+                  </Badge>
                   <ChevronRight
                     size={16}
                     className="text-slate-300 group-hover:text-emerald-500 transition-colors"
                   />
                 </div>
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -191,30 +199,25 @@ function ItemSheet({
   };
 
   return (
-    <>
-      {/* Overlay */}
-      <div
-        className="fixed inset-0 bg-black/30 z-40 sheet-overlay"
-        onClick={onClose}
-      />
-
-      {/* Panel */}
-      <div className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-xl z-50 flex flex-col sheet-panel">
+    <Sheet open onOpenChange={(open) => !open && onClose()}>
+      <SheetContent side="right" className="h-full w-full max-w-md p-0 flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 h-16 border-b border-border shrink-0">
+        <SheetHeader className="flex-row items-center justify-between px-6 h-16 border-b border-border shrink-0">
           <div className="flex items-center gap-2">
             <Edit3 size={16} className="text-emerald-600" />
-            <h2 className="text-base font-semibold text-slate-900">
+            <SheetTitle className="text-base font-semibold text-slate-900">
               Edit Item
-            </h2>
+            </SheetTitle>
           </div>
-          <button
+          <Button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+            size="icon"
+            variant="ghost"
+            className="p-1.5 rounded-lg hover:bg-slate-100"
           >
             <X size={18} className="text-slate-400" />
-          </button>
-        </div>
+          </Button>
+        </SheetHeader>
 
         {/* Form body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-5">
@@ -228,11 +231,11 @@ function ItemSheet({
             <label className="block text-sm font-medium text-slate-700 mb-1.5">
               Item Name
             </label>
-            <input
+            <Input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              className="w-full"
             />
           </div>
 
@@ -241,11 +244,11 @@ function ItemSheet({
             <label className="block text-sm font-medium text-slate-700 mb-1.5">
               Description
             </label>
-            <textarea
+            <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+              className="w-full resize-none"
             />
           </div>
 
@@ -259,11 +262,11 @@ function ItemSheet({
                 size={16}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
               />
-              <input
+              <Input
                 type="text"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                className="w-full pl-9"
               />
             </div>
           </div>
@@ -276,13 +279,13 @@ function ItemSheet({
             <div className="flex flex-wrap gap-2">
               {item.tags.length > 0 ? (
                 item.tags.map((tag) => (
-                  <span
+                  <Badge
                     key={tag}
                     className="inline-flex items-center gap-1 text-xs font-medium bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full"
                   >
                     <Tag size={10} />
                     {tag}
-                  </span>
+                  </Badge>
                 ))
               ) : (
                 <span className="text-xs text-slate-400">No tags</span>
@@ -298,34 +301,20 @@ function ItemSheet({
                 Show this item on the public menu
               </p>
             </div>
-            <button
-              onClick={() => setAvailable(!available)}
-              className={cn(
-                "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
-                available ? "bg-emerald-600" : "bg-slate-200"
-              )}
-              role="switch"
-              aria-checked={available}
-            >
-              <span
-                className={cn(
-                  "inline-block h-4 w-4 rounded-full bg-white shadow-sm transform transition-transform",
-                  available ? "translate-x-6" : "translate-x-1"
-                )}
-              />
-            </button>
+            <Switch checked={available} onCheckedChange={setAvailable} />
           </div>
         </div>
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-border flex gap-3 shrink-0">
-          <button
+          <Button
             onClick={onClose}
-            className="flex-1 py-2 text-sm font-medium text-slate-600 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
+            variant="secondary"
+            className="flex-1 py-2 text-sm font-medium text-slate-600 bg-slate-50 rounded-lg hover:bg-slate-100"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleSave}
             className={cn(
               "flex-1 py-2 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2",
@@ -342,9 +331,9 @@ function ItemSheet({
             ) : (
               "Save Changes"
             )}
-          </button>
+          </Button>
         </div>
-      </div>
-    </>
+      </SheetContent>
+    </Sheet>
   );
 }

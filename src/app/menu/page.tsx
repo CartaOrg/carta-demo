@@ -10,6 +10,10 @@ import {
   Phone,
   Instagram,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 // Map category IDs to food emojis for visual flair
 const categoryEmoji: Record<string, string> = {
@@ -44,45 +48,39 @@ export default function FullMenuPage() {
               </div>
             </div>
             <div className="flex gap-2">
-              <a
-                href="#"
-                className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center hover:bg-white/25 transition-colors"
-              >
-                <Phone size={16} />
-              </a>
-              <a
-                href="#"
-                className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center hover:bg-white/25 transition-colors"
-              >
-                <Instagram size={16} />
-              </a>
+              <Button asChild variant="ghost" size="icon" className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 text-white">
+                <a href="#"><Phone size={16} /></a>
+              </Button>
+              <Button asChild variant="ghost" size="icon" className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 text-white">
+                <a href="#"><Instagram size={16} /></a>
+              </Button>
             </div>
           </div>
 
           {/* Info chips */}
           <div className="flex flex-wrap gap-2 mb-6">
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full">
+            <Badge className="inline-flex items-center gap-1.5 text-xs font-medium bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full">
               <Star size={12} fill="currentColor" className="text-amber-300" />{" "}
               4.8 (320 reviews)
-            </span>
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full">
+            </Badge>
+            <Badge className="inline-flex items-center gap-1.5 text-xs font-medium bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full">
               <Clock size={12} /> Open · Closes 10 PM
-            </span>
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full">
+            </Badge>
+            <Badge className="inline-flex items-center gap-1.5 text-xs font-medium bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full">
               <MapPin size={12} /> 123 Main St, Downtown
-            </span>
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full">
+            </Badge>
+            <Badge className="inline-flex items-center gap-1.5 text-xs font-medium bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full">
               <Wifi size={12} /> Free Wi-Fi
-            </span>
+            </Badge>
           </div>
 
           {/* Search */}
           <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3">
             <Search size={16} className="text-emerald-200" />
-            <input
+            <Input
               type="text"
               placeholder="Search our menu..."
-              className="bg-transparent text-sm text-white placeholder:text-emerald-200/70 outline-none w-full"
+              className="h-auto border-0 shadow-none bg-transparent text-sm text-white placeholder:text-emerald-200/70 focus-visible:ring-0"
               readOnly
             />
           </div>
@@ -94,14 +92,17 @@ export default function FullMenuPage() {
         <div className="max-w-2xl mx-auto px-4">
           <div className="flex gap-1 overflow-x-auto py-3 -mx-4 px-4 scrollbar-hide">
             {categories.map((cat) => (
-              <a
+              <Button
                 key={cat.id}
-                href={`#${cat.slug}`}
+                asChild
+                variant="ghost"
                 className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
               >
-                <span>{categoryEmoji[cat.id] || "🍽️"}</span>
-                {cat.name}
-              </a>
+                <a href={`#${cat.slug}`}>
+                  <span>{categoryEmoji[cat.id] || "🍽️"}</span>
+                  {cat.name}
+                </a>
+              </Button>
             ))}
           </div>
         </div>
@@ -136,10 +137,11 @@ export default function FullMenuPage() {
               {/* Items grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {catItems.map((item) => (
-                  <div
+                  <Card
                     key={item.id}
-                    className="bg-white rounded-xl border border-border overflow-hidden hover:shadow-md hover:border-emerald-200 transition-all group cursor-pointer"
+                    className="gap-0 p-0 overflow-hidden hover:shadow-md hover:border-emerald-200 transition-all group cursor-pointer"
                   >
+                    <CardContent className="p-0">
                     {/* Image area */}
                     <div className="relative h-36 bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center">
                       <span className="text-5xl group-hover:scale-110 transition-transform">
@@ -150,7 +152,7 @@ export default function FullMenuPage() {
                       {item.tags.length > 0 && (
                         <div className="absolute top-2 left-2 flex gap-1">
                           {item.tags.map((tag) => (
-                            <span
+                            <Badge
                               key={tag}
                               className={cn(
                                 "text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full",
@@ -166,7 +168,7 @@ export default function FullMenuPage() {
                               )}
                             >
                               {tag}
-                            </span>
+                            </Badge>
                           ))}
                         </div>
                       )}
@@ -185,13 +187,14 @@ export default function FullMenuPage() {
                         <span className="text-base font-bold text-slate-900">
                           ${item.price.toFixed(2)}
                         </span>
-                        <button className="flex items-center gap-1.5 text-xs font-semibold text-white bg-emerald-600 pl-3 pr-3.5 py-2 rounded-lg hover:bg-emerald-700 active:scale-95 transition-all">
+                        <Button size="sm" className="h-auto flex items-center gap-1.5 text-xs font-semibold text-white bg-emerald-600 pl-3 pr-3.5 py-2 rounded-lg hover:bg-emerald-700 active:scale-95">
                           <ShoppingBag size={13} />
                           Add to Cart
-                        </button>
+                        </Button>
                       </div>
                     </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             </section>
@@ -201,7 +204,8 @@ export default function FullMenuPage() {
 
       {/* ── Restaurant Info Footer ───────────────────────── */}
       <div className="max-w-2xl mx-auto px-4 mt-4">
-        <div className="bg-white rounded-xl border border-border p-5 space-y-4">
+        <Card className="gap-0 p-5 space-y-4">
+          <CardContent className="p-0 space-y-4">
           <h3 className="text-sm font-semibold text-slate-900">
             Restaurant Info
           </h3>
@@ -227,7 +231,8 @@ export default function FullMenuPage() {
               <p className="text-slate-700 font-medium">Dine-in · Takeout · Delivery</p>
             </div>
           </div>
-        </div>
+          </CardContent>
+        </Card>
 
         <p className="text-center text-xs text-slate-300 mt-6 mb-4">
           Powered by <span className="font-semibold text-slate-400">Carta</span>
@@ -237,10 +242,10 @@ export default function FullMenuPage() {
       {/* ── Sticky Cart Bar ──────────────────────────────── */}
       <div className="fixed bottom-0 left-0 right-0 z-40">
         <div className="max-w-2xl mx-auto px-4 pb-4">
-          <button className="w-full bg-emerald-600 text-white py-3.5 rounded-2xl font-semibold text-sm hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 shadow-xl shadow-emerald-900/20">
+          <Button className="w-full h-auto bg-emerald-600 text-white py-3.5 rounded-2xl font-semibold text-sm hover:bg-emerald-700 flex items-center justify-center gap-2 shadow-xl shadow-emerald-900/20">
             <ShoppingBag size={18} />
             View Cart · 0 items
-          </button>
+          </Button>
         </div>
       </div>
     </div>

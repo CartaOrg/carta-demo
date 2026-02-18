@@ -8,6 +8,9 @@ import {
   CheckCircle2,
   Star,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 const features = [
   {
@@ -57,28 +60,22 @@ export default function LandingPage() {
             </span>
           </div>
           <div className="flex items-center gap-4">
-            <Link
-              href="/menu"
-              className="text-sm text-slate-500 hover:text-slate-900 transition-colors"
-            >
-              Demo Menu
-            </Link>
-            <Link
-              href="/dashboard"
-              className="text-sm font-medium text-white bg-emerald-600 px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
-            >
-              Open Dashboard
-            </Link>
+            <Button asChild variant="link" className="text-sm text-slate-500 hover:text-slate-900 p-0">
+              <Link href="/menu">Demo Menu</Link>
+            </Button>
+            <Button asChild className="text-sm font-medium text-white bg-emerald-600 px-4 py-2 rounded-lg hover:bg-emerald-700">
+              <Link href="/dashboard">Open Dashboard</Link>
+            </Button>
           </div>
         </div>
       </nav>
 
       {/* Hero */}
       <section className="max-w-6xl mx-auto px-6 py-24 text-center">
-        <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 text-sm font-medium px-4 py-1.5 rounded-full mb-6">
+        <Badge className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 text-sm font-medium px-4 py-1.5 rounded-full mb-6">
           <Star size={14} fill="currentColor" />
           #1 Digital Menu Platform for Restaurants
-        </div>
+        </Badge>
         <h1 className="text-5xl sm:text-6xl font-bold text-slate-900 tracking-tight leading-tight max-w-3xl mx-auto">
           Your menu, digitized.
           <br />
@@ -89,19 +86,15 @@ export default function LandingPage() {
           orders, and connect with any POS system — all from one dashboard.
         </p>
         <div className="flex items-center justify-center gap-4 mt-8">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 text-sm font-medium text-white bg-emerald-600 px-6 py-3 rounded-lg hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200"
-          >
-            Get Started Free
-            <ArrowRight size={16} />
-          </Link>
-          <Link
-            href="/menu"
-            className="inline-flex items-center gap-2 text-sm font-medium text-slate-700 bg-slate-100 px-6 py-3 rounded-lg hover:bg-slate-200 transition-colors"
-          >
-            View Demo Menu
-          </Link>
+          <Button asChild className="inline-flex items-center gap-2 text-sm font-medium text-white bg-emerald-600 px-6 py-3 rounded-lg hover:bg-emerald-700 shadow-lg shadow-emerald-200 h-auto">
+            <Link href="/dashboard">
+              Get Started Free
+              <ArrowRight size={16} />
+            </Link>
+          </Button>
+          <Button asChild variant="secondary" className="inline-flex items-center gap-2 text-sm font-medium text-slate-700 bg-slate-100 px-6 py-3 rounded-lg hover:bg-slate-200 h-auto">
+            <Link href="/menu">View Demo Menu</Link>
+          </Button>
         </div>
       </section>
 
@@ -121,20 +114,22 @@ export default function LandingPage() {
             {features.map((f) => {
               const Icon = f.icon;
               return (
-                <div
+                <Card
                   key={f.title}
-                  className="bg-white rounded-lg border border-border p-6"
+                  className="gap-0 p-6"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center mb-4">
-                    <Icon size={20} className="text-emerald-600" />
-                  </div>
-                  <h3 className="text-sm font-semibold text-slate-900 mb-2">
-                    {f.title}
-                  </h3>
-                  <p className="text-sm text-slate-500 leading-relaxed">
-                    {f.description}
-                  </p>
-                </div>
+                  <CardContent className="p-0">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center mb-4">
+                      <Icon size={20} className="text-emerald-600" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-slate-900 mb-2">
+                      {f.title}
+                    </h3>
+                    <p className="text-sm text-slate-500 leading-relaxed">
+                      {f.description}
+                    </p>
+                  </CardContent>
+                </Card>
               );
             })}
           </div>
@@ -149,37 +144,39 @@ export default function LandingPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {testimonials.map((t) => (
-              <div
+              <Card
                 key={t.name}
-                className="bg-white rounded-lg border border-border p-6"
+                className="gap-0 p-6"
               >
-                <div className="flex gap-1 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      size={14}
-                      fill="#059669"
-                      className="text-emerald-600"
-                    />
-                  ))}
-                </div>
-                <p className="text-sm text-slate-600 leading-relaxed mb-4">
-                  &ldquo;{t.text}&rdquo;
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                    <span className="text-xs font-bold text-emerald-700">
-                      {t.name[0]}
-                    </span>
+                <CardContent className="p-0">
+                  <div className="flex gap-1 mb-4">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        size={14}
+                        fill="#059669"
+                        className="text-emerald-600"
+                      />
+                    ))}
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-800">
-                      {t.name}
-                    </p>
-                    <p className="text-xs text-slate-400">{t.role}</p>
+                  <p className="text-sm text-slate-600 leading-relaxed mb-4">
+                    &ldquo;{t.text}&rdquo;
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                      <span className="text-xs font-bold text-emerald-700">
+                        {t.name[0]}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-800">
+                        {t.name}
+                      </p>
+                      <p className="text-xs text-slate-400">{t.role}</p>
+                    </div>
                   </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
@@ -195,13 +192,12 @@ export default function LandingPage() {
             Join thousands of restaurants already using Carta to manage their
             digital menu and orders.
           </p>
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 text-sm font-medium text-emerald-700 bg-white px-6 py-3 rounded-lg hover:bg-emerald-50 transition-colors"
-          >
-            <CheckCircle2 size={16} />
-            Start Free Trial
-          </Link>
+          <Button asChild className="inline-flex items-center gap-2 text-sm font-medium text-emerald-700 bg-white px-6 py-3 rounded-lg hover:bg-emerald-50 h-auto">
+            <Link href="/dashboard">
+              <CheckCircle2 size={16} />
+              Start Free Trial
+            </Link>
+          </Button>
         </div>
       </section>
 

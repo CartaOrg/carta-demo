@@ -1,4 +1,6 @@
 import { Store, Globe, Bell, Palette, Shield } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 const sections = [
   { icon: Store, label: "Restaurant Profile", description: "Name, address, hours of operation, and contact details." },
@@ -22,19 +24,26 @@ export default function SettingsPage() {
         {sections.map((s) => {
           const Icon = s.icon;
           return (
-            <div
+            <Card
               key={s.label}
-              className="bg-white rounded-lg border border-border p-5 flex items-center gap-4 hover:border-emerald-200 hover:shadow-sm transition-all cursor-pointer"
+              className="gap-0 p-5 hover:border-emerald-200 hover:shadow-sm transition-all"
             >
-              <div className="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center shrink-0">
-                <Icon size={20} className="text-slate-500" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-sm font-semibold text-slate-900">{s.label}</h3>
-                <p className="text-xs text-slate-400 mt-0.5">{s.description}</p>
-              </div>
-              <span className="text-xs text-slate-300">→</span>
-            </div>
+              <CardContent className="p-0">
+                <Button
+                  variant="ghost"
+                  className="w-full h-auto p-0 flex items-center justify-start gap-4 hover:bg-transparent"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center shrink-0">
+                    <Icon size={20} className="text-slate-500" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <h3 className="text-sm font-semibold text-slate-900">{s.label}</h3>
+                    <p className="text-xs text-slate-400 mt-0.5">{s.description}</p>
+                  </div>
+                  <span className="text-xs text-slate-300">→</span>
+                </Button>
+              </CardContent>
+            </Card>
           );
         })}
       </div>

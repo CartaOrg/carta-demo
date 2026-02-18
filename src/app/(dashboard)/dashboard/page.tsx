@@ -5,6 +5,8 @@ import {
   TrendingUp,
   UtensilsCrossed,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const revenueFallbackData = [
   { hour: "9AM", revenue: 180 },
@@ -93,11 +95,11 @@ export default function DashboardPage() {
           const Icon = stat.icon;
           const colors = colorMap[stat.color];
           return (
-            <div
+            <Card
               key={stat.label}
-              className="bg-white rounded-lg border border-border p-5 flex items-start justify-between"
+              className="gap-0 p-5 flex items-start justify-between"
             >
-              <div>
+              <CardContent className="p-0">
                 <p className="text-sm text-slate-500">{stat.label}</p>
                 <p className="text-2xl font-semibold text-slate-900 mt-1">
                   {stat.value}
@@ -112,13 +114,13 @@ export default function DashboardPage() {
                   {stat.change}
                   {stat.changeType === "positive" && " vs yesterday"}
                 </p>
-              </div>
+              </CardContent>
               <div
                 className={`${colors.bg} p-2.5 rounded-lg`}
               >
                 <Icon size={20} className={colors.icon} />
               </div>
-            </div>
+            </Card>
           );
         })}
       </div>
@@ -126,10 +128,10 @@ export default function DashboardPage() {
       {/* Revenue Chart Placeholder + Active Orders */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue Chart */}
-        <div className="lg:col-span-2 bg-white rounded-lg border border-border p-5">
-          <h2 className="text-base font-semibold text-slate-900 mb-4">
-            Revenue Today
-          </h2>
+        <Card className="lg:col-span-2 gap-0 p-5">
+          <CardHeader className="p-0 mb-4">
+            <CardTitle className="text-base font-semibold text-slate-900">Revenue Today</CardTitle>
+          </CardHeader>
           <div className="rounded-xl border border-slate-100 bg-gradient-to-b from-slate-50/70 to-white p-3">
             <div className="flex items-end gap-3 h-44 border-b border-slate-200 pb-2">
               {revenueByHour.map((d) => {
@@ -155,13 +157,13 @@ export default function DashboardPage() {
               ))}
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Active Orders */}
-        <div className="bg-white rounded-lg border border-border p-5">
-          <h2 className="text-base font-semibold text-slate-900 mb-4">
-            Active Orders
-          </h2>
+        <Card className="gap-0 p-5">
+          <CardHeader className="p-0 mb-4">
+            <CardTitle className="text-base font-semibold text-slate-900">Active Orders</CardTitle>
+          </CardHeader>
           <div className="space-y-3">
             {activeOrders.map((order) => (
               <div
@@ -176,7 +178,7 @@ export default function DashboardPage() {
                     {order.customerName} · {order.type}
                   </p>
                 </div>
-                <span
+                <Badge
                   className={`text-xs font-medium px-2 py-1 rounded-full ${
                     order.status === "new"
                       ? "bg-blue-50 text-blue-700"
@@ -186,18 +188,18 @@ export default function DashboardPage() {
                   }`}
                 >
                   {order.status}
-                </span>
+                </Badge>
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Popular Items */}
-      <div className="bg-white rounded-lg border border-border p-5">
-        <h2 className="text-base font-semibold text-slate-900 mb-4">
-          Popular Items
-        </h2>
+      <Card className="gap-0 p-5">
+        <CardHeader className="p-0 mb-4">
+          <CardTitle className="text-base font-semibold text-slate-900">Popular Items</CardTitle>
+        </CardHeader>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {dashboardStats.popularItems.map((item) => (
             <div
@@ -216,7 +218,7 @@ export default function DashboardPage() {
             </div>
           ))}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

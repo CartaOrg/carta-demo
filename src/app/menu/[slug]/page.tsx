@@ -1,6 +1,10 @@
 import { categories, menuItems } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 import { Clock, MapPin, Star, ShoppingBag } from "lucide-react";
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 // Generate static params for all category slugs
 export function generateStaticParams() {
@@ -50,19 +54,21 @@ export default async function PublicMenuPage({
 
           {/* Category pills */}
           <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-            <a
-              href="/menu"
+            <Button
+              asChild
+              variant="ghost"
               className={cn(
                 "px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
                 "bg-white/20 text-white hover:bg-white/30"
               )}
             >
-              All
-            </a>
+              <Link href="/menu">All</Link>
+            </Button>
             {categories.map((cat) => (
-              <a
+              <Button
                 key={cat.id}
-                href={`/menu/${cat.slug}`}
+                asChild
+                variant="ghost"
                 className={cn(
                   "px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
                   category?.id === cat.id
@@ -70,8 +76,8 @@ export default async function PublicMenuPage({
                     : "bg-white/20 text-white hover:bg-white/30"
                 )}
               >
-                {cat.name}
-              </a>
+                <a href={`/menu/${cat.slug}`}>{cat.name}</a>
+              </Button>
             ))}
           </div>
         </div>
@@ -85,10 +91,11 @@ export default async function PublicMenuPage({
 
         <div className="space-y-3">
           {items.map((item) => (
-            <div
+            <Card
               key={item.id}
-              className="bg-white rounded-xl border border-border p-4 flex gap-4"
+              className="gap-0 p-4"
             >
+              <CardContent className="p-0 flex gap-4">
               {/* Image placeholder */}
               <div className="w-20 h-20 rounded-lg bg-slate-100 flex items-center justify-center text-3xl shrink-0">
                 🍽️
@@ -110,26 +117,27 @@ export default async function PublicMenuPage({
                   <span className="text-sm font-bold text-slate-900">
                     ${item.price.toFixed(2)}
                   </span>
-                  <button className="flex items-center gap-1 text-xs font-medium text-white bg-emerald-600 px-3 py-1.5 rounded-lg hover:bg-emerald-700 transition-colors">
+                  <Button size="sm" className="h-auto flex items-center gap-1 text-xs font-medium text-white bg-emerald-600 px-3 py-1.5 rounded-lg hover:bg-emerald-700">
                     <ShoppingBag size={12} />
                     Add
-                  </button>
+                  </Button>
                 </div>
 
                 {item.tags.length > 0 && (
                   <div className="flex gap-1.5 mt-2">
                     {item.tags.map((tag) => (
-                      <span
+                      <Badge
                         key={tag}
                         className="text-[10px] font-medium bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded"
                       >
                         {tag}
-                      </span>
+                      </Badge>
                     ))}
                   </div>
                 )}
               </div>
-            </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
 
@@ -142,10 +150,10 @@ export default async function PublicMenuPage({
 
       {/* Sticky cart bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-border p-4 max-w-lg mx-auto">
-        <button className="w-full bg-emerald-600 text-white py-3 rounded-xl font-medium text-sm hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2">
+        <Button className="w-full h-auto bg-emerald-600 text-white py-3 rounded-xl font-medium text-sm hover:bg-emerald-700 flex items-center justify-center gap-2">
           <ShoppingBag size={16} />
           View Cart (0 items)
-        </button>
+        </Button>
       </div>
     </div>
   );
